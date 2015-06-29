@@ -14,63 +14,127 @@ var Game = (function() {
 
 	canvas.id = "gameCanvas";
 
-	var R = 50 , 
+	var WINSCORE = 10,
 
-	MIN_X = R,
+		INITED = false;
 
-	MAX_X = width - R ,
+	var spriteData = {
 
-	MIN_Y = - R,
+		images: ["game/sprite.png"],
 
-	MAX_Y = height + R ,
+		frames: [
+		    // x, y, width, height, imageIndex*, regX*, regY*
+		    [0, 0, 76, 116],
 
-	WINSCORE = 1;
+		    [0, 142, 76, 124],
 
-	function makeCircle() {
+		    [0, 304, 48, 94]
 
-		var circle = new createjs.Shape();
-
-		circle.graphics.beginFill("DeepSkyBlue").drawCircle(0, 0, 50);
-
-		circle.x = 50 + Math.floor( Math.random() * MAX_X );
-
-		circle.y = -50;
-
-		circle.id = "circle" + Date.now();
-
-		createjs.Tween.get(circle)
-
-		.to({
-
-			y: MAX_Y
-
-		}, speed + Math.floor( Math.random() * speedOffset ), createjs.Ease.linear);
-
-		data.makeCount ++ ;
-
-		return circle;
+		]
 
 	}
 
-	function removeCircle(circle) {
+	var spriteSheet = new createjs.SpriteSheet(spriteData);
 
-		Entity.stage.removeChild(circle);
+	function makefire() {
+
+		var fire = new createjs.Sprite(spriteSheet);
+
+		var index = Math.floor( Math.random() * 3 ) ;
+
+		fire.gotoAndStop( index );
+		
+		var fireWidth = spriteData.frames[index][2],
+
+			fireHeight = spriteData.frames[index][3];
+
+		fire.x = Math.floor( Math.random() *  (width - fireWidth ) );
+
+		fire.y = -fireHeight;
+
+		fire.id = "fire" + Date.now();
+
+		createjs.Tween.get(fire)
+
+		.to({
+
+			y: height + fireHeight
+
+		}, speed + Math.floor( Math.random() * speedOffset ), createjs.Ease.linear);
+
+		createjs.Tween.get(fire,{
+
+			loop : true
+
+		})
+
+		.to({
+
+			alpha: 0.8,
+
+			scaleX : 1.05 ,
+
+			scaley : 1.05
+
+		},300);
+
+		data.makeCount ++ ;
+
+		return fire;
+
+	}
+
+	function removefire(fire) {
+
+		Entity.stage.removeChild(fire);
+
+	}
+
+	function _makeBg(){
+
+		var imageBg = new createjs.Bitmap("game/cold_head.jpg");
+
+		var imageSrc = imageBg.image;
+
+		imageSrc.onload = function(){
+
+			var imageWidth = imageSrc.naturalWidth ,
+
+				imageHeight = imageSrc.naturalHeight
+
+			if( imageWidth / imageHeight > width / height){ //按高度缩放
+
+				var percent = height / imageHeight ;
+
+			}else {
+
+				var percent = width / imageWidth ;
+
+			}
+			imageBg.setTransform ( 0 , 0 , percent , percent )
+			
+			Entity.stage.addChild(imageBg);
+
+			console.log(imageBg);
+
+		}
+
 
 	}
 
 	function _clickEvent(event){
 
-		var circle = event.target;
+		var fire = event.target;
 
-		console.log(circle);
+		console.log(fire);
 
-		if( 0 > circle.id.indexOf("circle") ){
+		if( 0 > fire.id.indexOf("fire") ){
 
 			return ;
 
 		}
 
-		createjs.Tween.get(circle)
+		createjs.Tween.get(fire)
 
 		.to({
 
@@ -80,13 +144,13 @@ var Game = (function() {
 
 		.call(function(event){
 
-			for(var i = 0 ; i < Entity.circles.length ; i++ ){
+			for(var i = 0 ; i < Entity.fires.length ; i++ ){
 		
-				if( Entity.circles[i].id === circle.id ){
+				if( Entity.fires[i].id === fire.id ){
 
-					removeCircle(circle);
+					removefire(fire);
 
-					Entity.circles.splice(i,1);
+					Entity.fires.splice(i,1);
 
 					console.log( ++data.score );
 
@@ -108,7 +172,7 @@ var Game = (function() {
 
 		stage: null,
 
-		circles: []
+		fires: []
 
 	}
 
@@ -129,6 +193,12 @@ var Game = (function() {
 
 		init: function() {
 
+			if(INITED){
+
+				return ;
+
+			}
+
 			document.body.appendChild(Entity.canvas);
 
 			Entity.stage = new createjs.Stage(Entity.canvas);
@@ -137,17 +207,21 @@ var Game = (function() {
 
 			createjs.Ticker.setFPS(60);
 
+			_makeBg();
+
 			Entity.stage.addEventListener('click', _clickEvent);
 
+			INITED = true;
+			
 		},
 
 		start: function() {
 
-			var circle = makeCircle();
+			var fire = makefire();
 
-			Entity.stage.addChild(circle);
+			Entity.stage.addChild(fire);
 
-			Entity.circles.push(circle);
+			Entity.fires.push(fire);
 			//createjs.Ticker.addEventListener("tick", Entity.stage);
 
 			createjs.Ticker.addEventListener("tick", this.update.bind(this));
@@ -164,7 +238,7 @@ var Game = (function() {
 
 			var time = event;
 
-			var circles = Entity.circles;
+			var fires = Entity.fires;
 
 			checkWin.bind(this)();
 
@@ -188,11 +262,11 @@ var Game = (function() {
 
 					data.runCount = 0 ;
 
-					var circle = makeCircle();
+					var fire = makefire();
 
-					Entity.circles.push(circle);
+					Entity.fires.push(fire);
 
-					Entity.stage.addChild(circle);
+					Entity.stage.addChild(fire);
 
 				}
 
@@ -200,15 +274,15 @@ var Game = (function() {
 
 			function checkForDel(){
 
-				for( var i = 0 , circle = null ; i < circles.length ; i ++){
+				for( var i = 0 , fire = null ; i < fires.length ; i ++){
 
-					circle = circles[i];
+					fire = fires[i];
 
-					if(circle.y > height + 50){
+					if(fire.y > height + 50){
 
-						removeCircle(circle);
+						removefire(fire);
 
-						circles.splice(i,1);
+						fires.splice(i,1);
 
 						i -- ;
 
