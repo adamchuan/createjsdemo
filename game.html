@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Demo</title>
+	<meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+	<style>
+		html,body,canvas{
+			display: block;
+			width:100%;
+			height:100%;
+			margin:0;
+			padding:0;
+		}
+	</style>
+
+</head>
+<body>
+
+</body>
+<script src="js/easeljs-0.8.1.min.js"></script>
+<script src="js/tweenjs-0.6.1.min.js"></script>
+<script src="js/index.js"></script>
+<script src="http://wq.360buyimg.com/js/halo/halo.15.01.js"></script>
+<script>
+	var imageData = {
+
+		sprite : "images/game/sprite.png",
+
+		hothead : "images/hot_head.jpg",
+
+		halfhead : "images/half_head.jpg",
+
+		coldhead : "images/cold_head.jpg",
+
+		cup1 : "images/beer-s94b1173f92.png",
+
+		cup2 : "images/beer2-sa404c8f533.png",
+
+		logo : "images/logo.png"
+		
+	}
+
+	var imageSrcArr = [];
+
+	for(var i in imageData){
+
+		imageSrcArr.push( imageData[i] );
+
+	}
+
+	halo.use('loader',function(m){
+
+		var loader = m.loader( imageSrcArr )
+
+		.loadend(function(percent){
+
+		    //加载完每一个资源都会调用一次
+		})
+		.complete(function(){
+
+			for(var i in imageData){
+
+				imageData[i] = loader.image(imageData[i]);
+
+			}
+
+			console.log(imageData);
+
+			Game.init({
+
+				imageData : imageData,
+
+				success : function(){
+
+					if( confirm("你过关了，是否再来一次") ) {
+
+						Game.restart();
+
+					}
+
+				} , 
+
+				fail : function(){
+
+					if( confirm("你失败了，是否再来一次") ) {
+
+						Game.restart();
+
+					}
+				}
+
+			});
+
+			Game.start();
+
+		});
+	});
+                
+
+</script>
+</html>
